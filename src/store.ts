@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_PALETTES, makeScene } from './defaults';
 import { TEXTURES, TEXTURE_BY_ID } from './textures';
+import { generatePalette } from './paletteGen';
+import type { Harmony } from './paletteGen';
 import type { Palette, Param, Preset, Scene, Values } from './types';
 
 export type Tab = 'texture' | 'colors' | 'dirt' | 'anim' | 'export';
@@ -188,6 +190,33 @@ export function remix() {
     const params = nudgeParams(t.params, s.params[t.id] ?? {}, 0.07, 0.04);
     return { ...s, params: { ...s.params, [t.id]: params } };
   });
+}
+
+export function randomPalette(mode: Harmony = 'auto') {
+  update((s) => ({ ...s, palette: generatePalette(mode) }));
+}
+
+/** Everything random: texture, params, seed, palette, finish and a bit of grade. */
+export function randomAll() {
+  update((s) => {
+    const t = TEXTURES[Math.floor(rnd() * TEXTURES.length)];
+    const params = nudgeParams(t.params, {}, 0.25, 0.3);
+    const palette = generatePalette('auto');
+    const finish: Values = { ...makeScene().finish };
+    const r = (a: number, b: number) => Math.round(a + rnd() * (b - a));
+    finish.grain = r(10, 40); finish.grainSize = +(1 + rnd() * 1.4).toFixed(1); finish.vignette = r(0, 45);
+    const extras = ['dust', 'paper', 'toner', 'streaks', 'ca', 'bleed', 'scan', 'edge', 'leak', 'hairs', 'jpeg'];
+    const n = Math.floor(rnd() * 3);
+    for (let i = 0; i < n; i++) {
+      const k = extras[Math.floor(rnd() * extras.length)];
+      finish[k] = k === 'jpeg' ? r(8, 25) : r(15, 50);
+      if (k === 'leak') { finish.leakX = r(0, 100); finish.leakY = r(0, 100); finish.leakColor = palette[2]; }
+    }
+    const grade = { ...s.grade, hue: 0, invert: false, contrast: +(0.95 + rnd() * 0.25).toFixed(2), brightness: 0, saturation: +(0.9 + rnd() * 0.25).toFixed(2), duotone: rnd() < 0.08, duoA: 0, duoB: 1 + Math.floor(rnd() * 3) };
+    return { ...s, textureId: t.id, params: { ...s.params, [t.id]: params }, seed: Math.floor(rnd() * 99999), palette, finish, grade };
+  });
+  save('active', null);
+  setState({ activePalette: null });
 }
 
 // ---------- palettes (brand profiles) ----------

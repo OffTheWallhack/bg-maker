@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FORMATS } from './defaults';
-import { redo, setFormat, setState, undo, useStore } from './store';
+import { randomAll, redo, setFormat, setState, undo, useStore } from './store';
 import type { Tab } from './store';
 import { AnimTab } from './ui/AnimTab';
 import { ColorTab } from './ui/ColorTab';
@@ -41,6 +41,7 @@ export function App() {
           ))}
         </div>
         <div className="tools">
+          <button onClick={randomAll} title="Všetko náhodne">🎲</button>
           <button onClick={undo} disabled={!canUndo} title="Späť">↶</button>
           <button onClick={redo} disabled={!canRedo} title="Znova">↷</button>
           <button className={safe ? 'on' : ''} onClick={() => setState({ safe: !safe })} title="Bezpečné zóny">▭</button>

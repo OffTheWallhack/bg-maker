@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CATEGORIES, TEXTURES, TEXTURE_BY_ID } from '../textures';
 import { paramValues } from '../gl/renderer';
-import { randomize, remix, resetParam, selectTexture, setParam, setSeed, texParams, update, useStore } from '../store';
+import { randomAll, randomize, remix, resetParam, selectTexture, setParam, setSeed, texParams, update, useStore } from '../store';
 import { textureThumb } from '../thumbs';
 import { ParamControl } from './Controls';
 
@@ -31,8 +31,9 @@ export function TextureTab() {
 
   return (
     <div className="stack">
+      <button className="btn acc" onClick={randomAll}>🎲 Všetko náhodne (textúra + farby + špina)</button>
       <div className="row">
-        <button className="btn grow" onClick={randomize}>🎲 Náhodne</button>
+        <button className="btn grow" onClick={randomize}>Náhodná textúra</button>
         <button className="btn grow" onClick={remix}>↻ Remix</button>
       </div>
       <div className="row seedrow">

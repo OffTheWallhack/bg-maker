@@ -1,5 +1,8 @@
 import { PALETTE_SLOTS } from '../defaults';
-import { deletePalette, newPalette, renamePalette, selectPalette, setGrade, setPaletteColor, updatePaletteFromScene, update, useStore } from '../store';
+import { useState } from 'react';
+import { HARMONIES } from '../paletteGen';
+import type { Harmony } from '../paletteGen';
+import { randomPalette, deletePalette, newPalette, renamePalette, selectPalette, setGrade, setPaletteColor, updatePaletteFromScene, update, useStore } from '../store';
 import { ColorField, Slider, Toggle, Segment } from './Controls';
 
 const R = (id: string, label: string, min: number, max: number, def: number, step = 0.01) => ({ type: 'range' as const, id, label, min, max, step, default: def });
@@ -14,12 +17,18 @@ export function ColorTab() {
   const scene = useStore((s) => s.scene);
   const palettes = useStore((s) => s.palettes);
   const active = useStore((s) => s.activePalette);
+  const [harm, setHarm] = useState<Harmony>('auto');
   const g = scene.grade;
   const cur = palettes.find((p) => p.id === active);
   const dirty = cur && cur.colors.some((c, i) => c.toLowerCase() !== scene.palette[i].toLowerCase());
 
   return (
     <div className="stack">
+      <h4>Generátor farieb</h4>
+      <button className="btn acc" onClick={() => randomPalette(harm)}>🎲 Náhodné farby</button>
+      <div className="seg">
+        {HARMONIES.map((h) => <button key={h.id} className={h.id === harm ? 'on' : ''} onClick={() => { setHarm(h.id); randomPalette(h.id); }}>{h.name}</button>)}
+      </div>
       <h4>Profily</h4>
       <div className="chips">
         {palettes.map((p) => (

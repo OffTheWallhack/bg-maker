@@ -1,6 +1,7 @@
 import type { CategoryId, Param, TextureDef } from '../types';
 
 export const CATEGORIES: { id: CategoryId; name: string }[] = [
+  { id: 'gradient', name: 'Gradienty / mesh' },
   { id: 'print', name: 'Tlač' },
   { id: 'material', name: 'Materiál' },
   { id: 'light', name: 'Svetlo / klub' },
