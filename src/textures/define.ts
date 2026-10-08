@@ -6,6 +6,8 @@ export const CATEGORIES: { id: CategoryId; name: string }[] = [
   { id: 'light', name: 'Svetlo / klub' },
   { id: 'geometry', name: 'Zvuk / geometria' },
   { id: 'glitch', name: 'Glitch / digitál' },
+  { id: 'nature', name: 'Voda / maskáč' },
+  { id: 'soft', name: 'Lesk / jemné svetlo' },
 ];
 
 /** slider */

@@ -8,7 +8,7 @@ export type Param = RangeParam | ToggleParam | SelectParam | ColorParam;
 
 export type Values = Record<string, ParamValue>;
 
-export type CategoryId = 'print' | 'material' | 'light' | 'geometry' | 'glitch';
+export type CategoryId = 'print' | 'material' | 'light' | 'geometry' | 'glitch' | 'nature' | 'soft';
 
 export interface TextureDef {
   id: string;
