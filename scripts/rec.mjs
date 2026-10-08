@@ -1,0 +1,12 @@
+import { chromium } from '/opt/node-tools/node_modules/playwright/index.mjs';
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+p.on('pageerror', (e) => console.log('[pageerror]', String(e).slice(0, 300)));
+await p.goto('http://localhost:5173/'); await p.waitForTimeout(1500);
+await p.click('text=Animácia'); await p.click('text=Animácia zapnutá'); await p.click('button:has-text("Blikanie")'); await p.click('button:has-text("Drift")');
+await p.click('button:has-text("2")'); 
+await p.click('text=Export');
+const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 120000 }), p.click('text=Nahrať slučku')]);
+console.log('download', dl.suggestedFilename());
+await p.screenshot({ path: '/tmp/ui-anim.png' });
+await b.close();
