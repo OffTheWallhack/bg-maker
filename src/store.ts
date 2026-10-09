@@ -205,6 +205,7 @@ export function randomAll() {
     const finish: Values = { ...makeScene().finish };
     const r = (a: number, b: number) => Math.round(a + rnd() * (b - a));
     finish.grain = r(10, 40); finish.grainSize = +(1 + rnd() * 1.4).toFixed(1); finish.vignette = r(0, 45);
+    if (rnd() < 0.5) { finish.multi = r(35, 85); finish.multiMode = Math.floor(rnd() * 3); finish.multiScale = +(0.6 + rnd() * 1.6).toFixed(1); }
     const extras = ['dust', 'paper', 'toner', 'streaks', 'ca', 'bleed', 'scan', 'edge', 'leak', 'hairs', 'jpeg'];
     const n = Math.floor(rnd() * 3);
     for (let i = 0; i < n; i++) {

@@ -22,6 +22,14 @@ export const FINISH_GROUPS: { name: string; params: Param[] }[] = [
       { type: 'color', id: 'leakColor', label: 'Farba', default: '#ff6a3d' },
     ],
   },
+  {
+    name: 'Viac farieb',
+    params: [
+      R('multi', 'Farebná variácia', 0, 100, 0),
+      R('multiScale', 'Mierka farieb', 0.3, 4, 1, 0.1),
+      { type: 'select', id: 'multiMode', label: 'Režim', options: ['Odtieň', 'Paleta', 'Dúha'], default: 1 },
+    ],
+  },
   { name: 'Obraz', params: [R('scan', 'Scan lines', 0, 100, 0), R('scanSize', 'Hrúbka riadkov', 1, 10, 3, 0.5), R('jpeg', 'JPEG crush', 0, 100, 0), R('blur', 'Rozostrenie', 0, 100, 0), R('glow', 'Žiara (glow)', 0, 100, 0)] },
   {
     name: 'Pokojná zóna (logo / text)',

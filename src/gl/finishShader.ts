@@ -148,6 +148,26 @@ void main(){
   c = mix(c, 1.0 - c, u_invert);
   c = clamp(c, 0.0, 1.0);
 
+  // --- more colours: a slow colour field spreads the palette across the image ---
+  if ((u_f_multi * 0.01) > 0.001){
+    vec2 mp = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0);
+    float mn = clamp((fbm(mp * u_f_multiScale * 1.3 + seed + vec2(cos(TT), sin(TT)) * 0.3) - 0.5) * 1.8 + 0.5, 0.0, 1.0);
+    float ml = luma(c);
+    float ma = u_f_multi * 0.01;
+    if (u_f_multiMode < 0.5){
+      c = hueRot(c, (mn - 0.5) * 3.4 * ma);
+    } else if (u_f_multiMode < 1.5){
+      vec3 tint = mn < 0.5 ? mix(u_ink2, u_hi, mn * 2.0) : mix(u_hi, u_ink1, (mn - 0.5) * 2.0);
+      tint = mix(tint, u_ink2, 0.0);
+      vec3 tinted = mix(tint * 0.12, tint * 1.25, smoothstep(0.0, 1.0, ml));
+      c = mix(c, tinted, ma * 0.85);
+    } else {
+      vec3 rb = 0.5 + 0.5 * cos(TAU * (mn * 1.1 + vec3(0.0, 0.33, 0.67)));
+      c = mix(c, rb * (0.12 + 1.05 * ml), ma * 0.8);
+    }
+    c = clamp(c, 0.0, 1.0);
+  }
+
   // --- calm zone (darken) ---
   c = mix(c, c * 0.38 + u_bg * 0.2, calmM * 0.85);
 
