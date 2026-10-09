@@ -1,6 +1,7 @@
 import type { CategoryId, Param, TextureDef } from '../types';
 
 export const CATEGORIES: { id: CategoryId; name: string }[] = [
+  { id: 'folk', name: 'Ľudové / retro' },
   { id: 'tribal', name: 'Neotribal / ostré tvary' },
   { id: 'gradient', name: 'Gradienty / mesh' },
   { id: 'print', name: 'Tlač' },
