@@ -66,3 +66,19 @@ export function ParamControl({ p, value, onChange, onReset }: { p: Param; value:
     case 'color': return <ColorField label={p.label} value={String(value)} onChange={onChange} />;
   }
 }
+
+export function Switch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return <button className={'sw-btn' + (on ? ' on' : '')} role="switch" aria-checked={on} onClick={() => onChange(!on)}><i /></button>;
+}
+
+export function Card({ title, on, onToggle, children }: { title: string; on: boolean; onToggle: (v: boolean) => void; children?: React.ReactNode }) {
+  return (
+    <div className={'fx' + (on ? ' on' : '')}>
+      <div className="fx-h" onClick={() => onToggle(!on)}>
+        <span>{title}</span>
+        <span onClick={(e) => e.stopPropagation()}><Switch on={on} onChange={onToggle} /></span>
+      </div>
+      {on && <div className="fx-b">{children}</div>}
+    </div>
+  );
+}

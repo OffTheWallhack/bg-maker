@@ -2,6 +2,9 @@ import { paramValues } from '../gl/renderer';
 import { randomAll, randomize, remix, resetParam, setParam, setSeed, texParams, update, useStore } from '../store';
 import { CATEGORIES, TEXTURE_BY_ID } from '../textures';
 import { ParamControl } from './Controls';
+import { LayerCard } from './LayerCard';
+import { PhotoCard } from './PhotoCard';
+import { RecipeRow } from './RecipeRow';
 
 export function TextureTab() {
   const scene = useStore((s) => s.scene);
@@ -21,11 +24,16 @@ export function TextureTab() {
         <input className="num" type="number" min={0} value={scene.seed} onChange={(e) => setSeed(+e.target.value)} />
         <button className="btn" onClick={() => setSeed(Math.floor(Math.random() * 99999))}>nový</button>
       </div>
+      <h4>Hotové štýly</h4>
+      <RecipeRow />
       <h4>Nastavenia textúry</h4>
       {def.params.map((p) => (
         <ParamControl key={def.id + p.id} p={p} value={vals[p.id]} onChange={(v) => setParam(p.id, v)} onReset={() => resetParam(p)} />
       ))}
       <button className="btn ghost" onClick={() => update((s) => ({ ...s, params: { ...s.params, [s.textureId]: {} } }))}>Obnoviť predvolené</button>
+      <h4>Vrstvy a fotka</h4>
+      <LayerCard />
+      <PhotoCard />
     </div>
   );
 }

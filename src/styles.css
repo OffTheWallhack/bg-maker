@@ -164,3 +164,19 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .intro-news p{margin:6px 0 0;font-size:13px;line-height:1.45;color:#d6cfe6}
 .intro-foot{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:13px;color:#a79fba}
 .intro-foot a{color:#f4eef9;text-decoration:none;border-bottom:1px solid #ffffff55}
+
+/* ---------- recipes, selects ---------- */
+.rrow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin:0 -14px;padding-left:14px;padding-right:14px}
+.rrow::-webkit-scrollbar{display:none}
+.rtile{flex:none;width:78px;display:flex;flex-direction:column;gap:4px;text-align:left;font-size:11px;color:var(--mut)}
+.rtile span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sel{width:100%;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+.fx-b .seg button{padding:6px 8px;font-size:12px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.chk{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;color:var(--mut);font-size:12.5px;text-align:left;background:#141417}
+.chk.on{color:var(--txt);border-color:#4a4a52}
+.chk i{width:16px;height:16px;border-radius:5px;border:1.5px solid #555;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-style:normal}
+.chk.on i{background:var(--acc);border-color:var(--acc);color:#fff}
+.chk small{margin-left:auto;color:var(--mut);font-size:10.5px}
+.pop-h{padding:8px 10px 4px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.pop{max-height:70dvh;overflow-y:auto}

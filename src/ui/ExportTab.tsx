@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react';
-import { convertToMp4, deliver, recordLoop, saveImage } from '../export';
-import { loadScene, sanitizeScene, savePresets, uid, useStore } from '../store';
+import { convertToMp4, deliver, exportSize, recordLoop, saveImage, saveSet } from '../export';
+import { FORMATS } from '../defaults';
+import { shareUrl } from '../share';
+import { loadScene, sanitizeScene, savePresets, setState, uid, useStore } from '../store';
+import { Segment, Toggle } from './Controls';
 import { sceneThumb } from '../thumbs';
 import type { Preset } from '../types';
 
@@ -12,6 +15,12 @@ export function ExportTab() {
   const [msg, setMsg] = useState('');
   const [video, setVideo] = useState<{ blob: Blob; ext: string } | null>(null);
   const [name, setName] = useState('');
+  const scale = useStore((s) => s.scale);
+  const transparent = useStore((s) => s.transparent);
+  const [picked, setPicked] = useState<string[]>(['story', 'post', 'square']);
+  const [linkMsg, setLinkMsg] = useState('');
+  const [ew, eh] = exportSize(scene.format.w, scene.format.h, scale);
+  const opts = { scale, transparent };
   const file = useRef<HTMLInputElement>(null);
 
   const run = async (label: string, fn: () => Promise<void>) => {
@@ -38,11 +47,31 @@ export function ExportTab() {
 
   return (
     <div className="stack">
-      <h4>Obrázok · {scene.format.w}×{scene.format.h}</h4>
+      <h4>Obrázok · {ew}×{eh}</h4>
       <div className="row">
-        <button className="btn acc grow" disabled={!!busy} onClick={() => run('png', () => saveImage(scene, 'png'))}>Uložiť PNG</button>
-        <button className="btn acc grow" disabled={!!busy} onClick={() => run('jpg', () => saveImage(scene, 'jpg'))}>Uložiť JPG</button>
+        <button className="btn acc grow" disabled={!!busy} onClick={() => run('png', () => saveImage(scene, 'png', opts))}>Uložiť PNG</button>
+        <button className="btn acc grow" disabled={!!busy} onClick={() => run('jpg', () => saveImage(scene, 'jpg', opts))}>Uložiť JPG</button>
       </div>
+      <Segment label="Rozlíšenie" options={['×1', '×2', '×3']} value={scale - 1} onChange={(i) => setState({ scale: i + 1 })} />
+      <Toggle label="Priehľadné pozadie (PNG) – vyreže farbu pozadia" value={transparent} onChange={(v) => setState({ transparent: v })} />
+      <h4>Odkaz na tento obraz</h4>
+      <button className="btn" onClick={async () => {
+        const url = shareUrl(scene);
+        try {
+          if (navigator.share && /iPhone|iPad|Android/i.test(navigator.userAgent)) await navigator.share({ title: 'BG Lab', url });
+          else { await navigator.clipboard.writeText(url); setLinkMsg('Odkaz skopírovaný.'); }
+        } catch { setLinkMsg(url); }
+      }}>🔗 Zdieľať odkaz (recept)</button>
+      {linkMsg && <p className="hint" style={{ wordBreak: 'break-all' }}>{linkMsg}</p>}
+      <p className="hint">Kto odkaz otvorí, uvidí presne to isté nastavenie. Vlastná fotka sa v odkaze nenachádza.</p>
+      <h4>Sada formátov naraz</h4>
+      <div className="checks">
+        {FORMATS.map((f) => {
+          const on = picked.includes(f.id);
+          return <button key={f.id} className={'chk' + (on ? ' on' : '')} onClick={() => setPicked(on ? picked.filter((x) => x !== f.id) : [...picked, f.id])}><i>{on ? '✓' : ''}</i>{f.name}<small>{f.w}×{f.h}</small></button>;
+        })}
+      </div>
+      <button className="btn acc" disabled={!!busy || !picked.length} onClick={() => run('set', () => saveSet(scene, FORMATS.filter((f) => picked.includes(f.id)), opts, setProg))}>Uložiť sadu ({picked.length})</button>
       <h4>Video slučka · {scene.anim.loop} s</h4>
       <button className="btn grow" disabled={!!busy} onClick={() => run('rec', async () => {
         const r = await recordLoop(scene, setProg);

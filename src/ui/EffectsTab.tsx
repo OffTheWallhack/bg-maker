@@ -1,11 +1,7 @@
 import { EFFECTS, SECTIONS } from '../finish';
 import { defaultFxOn, defaultFinish } from '../defaults';
 import { setFinish, setFx, update, useStore } from '../store';
-import { ParamControl } from './Controls';
-
-function Switch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
-  return <button className={'sw-btn' + (on ? ' on' : '')} role="switch" aria-checked={on} onClick={() => onChange(!on)}><i /></button>;
-}
+import { ParamControl, Switch } from './Controls';
 
 export function EffectsTab() {
   const finish = useStore((s) => s.scene.finish);

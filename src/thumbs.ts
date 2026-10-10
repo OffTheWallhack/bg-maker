@@ -5,14 +5,14 @@ import type { Scene } from './types';
 let r: Renderer | null = null;
 const getR = () => r ?? (r = new Renderer(document.createElement('canvas')));
 const cache = new Map<string, string>();
-const queue: { pal: string; run: () => void }[] = [];
+const queue: { pal: string | null; run: () => void }[] = [];
 let latestPal = '';
 let busy = false;
 
 function pump() {
   if (busy) return;
   let job = queue.shift();
-  while (job && job.pal !== latestPal) job = queue.shift(); // drop jobs for an old palette
+  while (job && job.pal !== null && job.pal !== latestPal) job = queue.shift(); // drop jobs for an old palette
   if (!job) return;
   busy = true;
   setTimeout(() => { try { job!.run(); } finally { busy = false; pump(); } }, 0);
@@ -41,6 +41,17 @@ export function textureThumb(id: string, palette: string[], cb: (url: string) =>
       cache.set(key, url);
       cb(url);
     } catch { /* shader error: leave tile empty */ }
+  } });
+  pump();
+}
+
+const sceneCache = new Map<string, string>();
+/** Lazily rendered thumbnail of a whole scene (recipes). */
+export function lazySceneThumb(key: string, build: () => Scene, cb: (url: string) => void) {
+  const hit = sceneCache.get(key);
+  if (hit) return cb(hit);
+  queue.push({ pal: null, run: () => {
+    try { const url = sceneThumb(build(), 160); sceneCache.set(key, url); cb(url); } catch { /* ignore */ }
   } });
   pump();
 }

@@ -1,5 +1,6 @@
 import { Renderer } from './gl/renderer';
 import type { Scene } from './types';
+import { makeZip } from './zip';
 
 let exportR: Renderer | null = null;
 function getR() {
@@ -7,15 +8,22 @@ function getR() {
     const c = document.createElement('canvas');
     c.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none';
     document.body.appendChild(c);
-    exportR = new Renderer(c);
+    exportR = new Renderer(c, { alpha: true });
   }
   return exportR;
 }
 
-function fullRender(scene: Scene, phase = 0) {
+/** Export size: format x scale, limited to 4096 px per side and 16 Mpx. */
+export function exportSize(w: number, h: number, scale: number): [number, number] {
+  let k = scale;
+  k = Math.min(k, 4096 / Math.max(w, h), Math.sqrt(16_000_000 / (w * h)));
+  return [Math.round(w * k), Math.round(h * k)];
+}
+
+function fullRender(scene: Scene, phase = 0, w = scene.format.w, h = scene.format.h, transparent = false) {
   const r = getR();
-  r.setSize(scene.format.w, scene.format.h);
-  r.render(scene, phase);
+  r.setSize(w, h);
+  r.render(scene, phase, { transparent });
   return r.canvas;
 }
 
@@ -37,11 +45,34 @@ export async function deliver(blob: Blob, name: string) {
 
 const baseName = (s: Scene) => `bglab-${s.textureId}-${s.seed}-${s.format.w}x${s.format.h}`;
 
-export async function saveImage(scene: Scene, kind: 'png' | 'jpg') {
-  const c = fullRender(scene, 0);
+export interface ExportOpts { scale: number; transparent: boolean }
+
+export async function saveImage(scene: Scene, kind: 'png' | 'jpg', o: ExportOpts = { scale: 1, transparent: false }) {
+  const [w, h] = exportSize(scene.format.w, scene.format.h, o.scale);
+  const c = fullRender(scene, 0, w, h, o.transparent && kind === 'png');
   const blob: Blob = await new Promise((res, rej) =>
     c.toBlob((b) => (b ? res(b) : rej(new Error('Export zlyhal'))), kind === 'png' ? 'image/png' : 'image/jpeg', 0.95));
-  await deliver(blob, `${baseName(scene)}.${kind}`);
+  await deliver(blob, `bglab-${scene.textureId}-${scene.seed}-${w}x${h}.${kind}`);
+}
+
+/** Renders the same picture in several formats and saves them (several files share sheet / one ZIP). */
+export async function saveSet(scene: Scene, formats: { id: string; w: number; h: number }[], o: ExportOpts, onProgress: (p: number) => void) {
+  const files: { name: string; blob: Blob }[] = [];
+  for (let i = 0; i < formats.length; i++) {
+    const f = formats[i];
+    const [w, h] = exportSize(f.w, f.h, o.scale);
+    const c = fullRender({ ...scene, format: { preset: f.id, w: f.w, h: f.h } }, 0, w, h, o.transparent);
+    const blob: Blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Export zlyhal'))), 'image/png'));
+    files.push({ name: `bglab-${f.id}-${w}x${h}.png`, blob });
+    onProgress((i + 1) / formats.length);
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  const list = files.map((f) => new File([f.blob], f.name, { type: 'image/png' }));
+  if (isMobile() && navigator.canShare?.({ files: list })) {
+    try { await navigator.share({ files: list }); return; } catch (e) { if ((e as Error).name === 'AbortError') return; }
+  }
+  if (files.length === 1) return deliver(files[0].blob, files[0].name);
+  await deliver(await makeZip(files), `bglab-sada-${scene.seed}.zip`);
 }
 
 export function pickMime(): string {

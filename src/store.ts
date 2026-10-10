@@ -2,6 +2,8 @@ import { useSyncExternalStore } from 'react';
 import { defaultFxOn, makeScene } from './defaults';
 import { BUILTIN_PALETTES } from './palettes';
 import { EFFECTS } from './finish';
+import { hasPhoto } from './photo';
+import { parseShare } from './share';
 import { TEXTURES, TEXTURE_BY_ID } from './textures';
 import { generatePalette } from './paletteGen';
 import type { Harmony } from './paletteGen';
@@ -19,6 +21,8 @@ export interface AppState {
   safe: boolean;
   cat: string;
   intro: boolean;
+  scale: number;
+  transparent: boolean;
   palettes: Palette[];
   activePalette: string | null;
   presets: Preset[];
@@ -61,6 +65,8 @@ export function sanitizeScene(s: Scene): Scene {
     finish: { ...base.finish, ...s.finish },
     anim: { ...base.anim, ...s.anim },
     fxOn: { ...defaultFxOn(), ...(s.fxOn ?? legacyFxOn(s.finish)) },
+    layer: { ...base.layer, ...s.layer, params: { ...(s.layer?.params ?? {}) } },
+    photo: { ...base.photo, ...s.photo, on: !!(s.photo?.on && hasPhoto()) },
     format: { ...base.format, ...s.format },
     params: s.params ?? {},
     palette: Array.isArray(s.palette) && s.palette.length === 5 ? s.palette : base.palette,
@@ -71,6 +77,8 @@ export function sanitizeScene(s: Scene): Scene {
 
 /** Every visit starts with a fresh random (static) background; format is remembered. */
 function startScene(stored: Scene | null): Scene {
+  const shared = typeof location !== 'undefined' ? parseShare(location.hash) : null;
+  if (shared) return sanitizeScene(shared);
   const base = stored ? sanitizeScene(stored) : makeScene();
   const r = randomScene(base);
   return { ...r, anim: { ...r.anim, on: false } };
@@ -88,6 +96,8 @@ function initial(): AppState {
     safe: false,
     cat: 'all',
     intro: !sessionSeen(),
+    scale: 1,
+    transparent: false,
     palettes: saved,
     activePalette: load<string | null>(LS.active, null),
     presets: load<Preset[]>(LS.presets, []),
@@ -172,6 +182,18 @@ export function setFinish(id: string, value: number | boolean | string) {
 }
 export function setFx(id: string, on: boolean) {
   update((s) => ({ ...s, fxOn: { ...s.fxOn, [id]: on } }), `fx:${id}`);
+}
+export function setLayer(patch: Partial<Scene['layer']>, key = '') {
+  update((s) => ({ ...s, layer: { ...s.layer, ...patch } }), key ? `l:${key}` : '');
+}
+export function setLayerParam(id: string, value: number | boolean | string) {
+  update((s) => ({ ...s, layer: { ...s.layer, params: { ...s.layer.params, [id]: value } } }), `lp:${id}`);
+}
+export function resetLayerParam(id: string) {
+  update((s) => { const p = { ...s.layer.params }; delete p[id]; return { ...s, layer: { ...s.layer, params: p } }; });
+}
+export function setPhoto(patch: Partial<Scene['photo']>, key = '') {
+  update((s) => ({ ...s, photo: { ...s.photo, ...patch } }), key ? `ph:${key}` : '');
 }
 export function setGrade<K extends keyof Scene['grade']>(k: K, v: Scene['grade'][K]) {
   update((s) => ({ ...s, grade: { ...s.grade, [k]: v } }), `g:${k}`);

@@ -30,6 +30,9 @@ export interface GlobalGrade {
 
 export interface Anim { on: boolean; speed: number; loop: number; motion: number; amount: number }
 
+export interface Layer2 { on: boolean; textureId: string; params: Values; blend: number; opacity: number; maskMode: number; maskPos: number; maskSoft: number; maskInv: boolean }
+export interface PhotoOpts { on: boolean; mode: number; blend: number; opacity: number; zoom: number; x: number; y: number; contrast: number }
+
 /** Everything that defines the image. Serialisable; used for undo/redo and presets. */
 export interface Scene {
   textureId: string;
@@ -41,6 +44,8 @@ export interface Scene {
   finish: Values;
   /** which effects are switched on (id -> bool) */
   fxOn: Record<string, boolean>;
+  layer: Layer2;
+  photo: PhotoOpts;
   anim: Anim;
 }
 

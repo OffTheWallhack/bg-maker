@@ -12,7 +12,7 @@ export function FormatMenu() {
     window.addEventListener('pointerdown', h);
     return () => window.removeEventListener('pointerdown', h);
   }, [open]);
-  const cur = FORMATS.find((f) => f.id === fmt.preset) ?? FORMATS[0];
+  const cur = FORMATS.find((f) => f.id === fmt.preset) ?? { name: 'Vlastný' };
   return (
     <div className="fmtwrap" ref={box}>
       <button className="fmtbtn" onClick={() => setOpen(!open)}>
@@ -20,15 +20,20 @@ export function FormatMenu() {
       </button>
       {open && (
         <div className="pop">
-          {FORMATS.filter((f) => f.id !== 'custom').map((f) => {
-            const k = 22 / Math.max(f.w, f.h);
-            return (
-              <button key={f.id} className={'fmtitem' + (fmt.preset === f.id ? ' on' : '')} onClick={() => { setFormat(f.id, f.w, f.h); setOpen(false); }}>
-                <span className="ar"><i style={{ width: f.w * k, height: f.h * k }} /></span>
-                <b>{f.name}</b><small>{f.w}×{f.h}</small>
-              </button>
-            );
-          })}
+          {(['social', 'wall'] as const).map((g) => (
+            <div key={g}>
+              <div className="pop-h">{g === 'social' ? 'Sociálne siete' : 'Tapety a bannery'}</div>
+              {FORMATS.filter((f) => f.group === g).map((f) => {
+                const k = 22 / Math.max(f.w, f.h);
+                return (
+                  <button key={f.id} className={'fmtitem' + (fmt.preset === f.id ? ' on' : '')} onClick={() => { setFormat(f.id, f.w, f.h); setOpen(false); }}>
+                    <span className="ar"><i style={{ width: Math.max(3, f.w * k), height: Math.max(3, f.h * k) }} /></span>
+                    <b>{f.name}</b><small>{f.w}×{f.h}</small>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
           <div className={'fmtitem custom' + (fmt.preset === 'custom' ? ' on' : '')}>
             <b>Vlastný</b>
             <input type="number" inputMode="numeric" value={fmt.w} onChange={(e) => setFormat('custom', +e.target.value, fmt.h)} />×

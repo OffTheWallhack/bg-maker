@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Renderer } from '../gl/renderer';
+import { usePhotoVersion } from '../photo';
 import { getState, useStore } from '../store';
 
 export function Preview({ onError }: { onError: (e: string) => void }) {
@@ -10,9 +11,10 @@ export function Preview({ onError }: { onError: (e: string) => void }) {
   const [fit, setFit] = useState({ w: 0, h: 0 });
   const scene = useStore((s) => s.scene);
   const safe = useStore((s) => s.safe);
+  const photoVer = usePhotoVersion();
   const { w, h } = scene.format;
 
-  useEffect(() => { dirty.current = true; }, [scene, fit]);
+  useEffect(() => { dirty.current = true; }, [scene, fit, photoVer]);
 
   useEffect(() => {
     const el = box.current!;

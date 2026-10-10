@@ -7,6 +7,7 @@ uniform sampler2D u_tex;
 uniform float u_gframes;   // grain frames per loop
 uniform float u_hue, u_contrast, u_brightness, u_saturation, u_invert, u_duo;
 uniform vec3 u_duoA, u_duoB;
+uniform float u_key;       // 1 = make the background colour transparent
 
 
 vec2 RPX; // one 1920-reference pixel in uv units
@@ -284,7 +285,9 @@ void main(){
     c += gcol * (u_f_grain * 0.01) * 0.42 * lw;
   }
   c += (jit - 0.5) / 255.0; // anti-banding dither
-  outColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+  float keyA = 1.0;
+  if (u_key > 0.5) keyA = smoothstep(0.03, 0.17, distance(texture(u_tex, uv).rgb, u_bg));
+  outColor = vec4(clamp(c, 0.0, 1.0), keyA);
 }
 `;
 

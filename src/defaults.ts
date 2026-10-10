@@ -2,19 +2,28 @@ import { EFFECTS, FINISH_PARAMS } from './finish';
 import { BUILTIN_PALETTES } from './palettes';
 import type { Scene, Values } from './types';
 
-export const FORMATS = [
-  { id: 'story', name: 'Story', w: 1080, h: 1920 },
-  { id: 'post', name: 'Post 4:5', w: 1080, h: 1350 },
-  { id: 'square', name: 'Štvorec', w: 1080, h: 1080 },
-  { id: 'reel', name: 'Reel cover', w: 1080, h: 1920 },
-  { id: 'landscape', name: 'Na šírku', w: 1920, h: 1080 },
-  { id: 'custom', name: 'Vlastný', w: 1080, h: 1080 },
+export interface FormatDef { id: string; name: string; w: number; h: number; group: 'social' | 'wall' }
+export const FORMATS: FormatDef[] = [
+  { id: 'story', name: 'Story', w: 1080, h: 1920, group: 'social' },
+  { id: 'post', name: 'Post 4:5', w: 1080, h: 1350, group: 'social' },
+  { id: 'square', name: 'Štvorec', w: 1080, h: 1080, group: 'social' },
+  { id: 'reel', name: 'Reel cover', w: 1080, h: 1920, group: 'social' },
+  { id: 'landscape', name: 'Na šírku', w: 1920, h: 1080, group: 'social' },
+  { id: 'iphone', name: 'Tapeta iPhone', w: 1290, h: 2796, group: 'wall' },
+  { id: 'android', name: 'Tapeta Android', w: 1440, h: 3120, group: 'wall' },
+  { id: 'desktop', name: 'Tapeta 4K', w: 3840, h: 2160, group: 'wall' },
+  { id: 'ytbanner', name: 'YouTube banner', w: 2560, h: 1440, group: 'wall' },
+  { id: 'xheader', name: 'X / Twitter hlavička', w: 1500, h: 500, group: 'wall' },
+  { id: 'thumb', name: 'YouTube náhľad', w: 1280, h: 720, group: 'wall' },
 ];
 
 export const PALETTE_SLOTS = ['Pozadie', 'Ink 1', 'Ink 2', 'Akcent', 'Špina'];
 
 export const MOTION_NAMES = ['Plávanie', 'Vlnenie', 'Dýchanie', 'Posun', 'Vír', 'Blikanie', 'Glitch'];
 export const MOTION_HINTS = ['každá časť obrazu pláva po svojom', 'jemné vlnenie ako hladina', 'časti sa nafukujú a zmenšujú', 'celý obraz plynie nahor', 'obraz sa točí okolo stredu', 'blikanie jasu', 'trhanie riadkov'];
+export const BLEND_NAMES = ['Normálne', 'Násobenie', 'Screen', 'Overlay', 'Jemné svetlo', 'Rozdiel', 'Sčítanie', 'Svetlejšie', 'Tmavšie'];
+export const MASK_NAMES = ['Bez masky', 'Zhora nadol', 'Zľava doprava', 'Stred', 'Škvrny'];
+export const PHOTO_MODES = ['Pôvodná', 'Farby palety', 'Čiernobiela', 'Prah (2 farby)'];
 export const LOOP_LENGTHS = [2, 4, 6, 8, 10];
 
 export function defaultFinish(): Values {
@@ -33,6 +42,8 @@ export function makeScene(textureId = 'mesh-gradient', palette = BUILTIN_PALETTE
     grade: { hue: 0, contrast: 1, brightness: 0, saturation: 1, invert: false, duotone: false, duoA: 0, duoB: 1 },
     finish: defaultFinish(),
     fxOn: defaultFxOn(),
+    layer: { on: false, textureId: 'smoke', params: {}, blend: 2, opacity: 0.85, maskMode: 0, maskPos: 50, maskSoft: 40, maskInv: false },
+    photo: { on: false, mode: 0, blend: 0, opacity: 1, zoom: 1, x: 0, y: 0, contrast: 1 },
     anim: { on: false, speed: 1, loop: 6, motion: 0, amount: 1 },
   };
 }
