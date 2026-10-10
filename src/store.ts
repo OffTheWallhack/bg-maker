@@ -69,11 +69,18 @@ export function sanitizeScene(s: Scene): Scene {
   return out;
 }
 
+/** Every visit starts with a fresh random (static) background; format is remembered. */
+function startScene(stored: Scene | null): Scene {
+  const base = stored ? sanitizeScene(stored) : makeScene();
+  const r = randomScene(base);
+  return { ...r, anim: { ...r.anim, on: false } };
+}
+
 function initial(): AppState {
   const saved = load<Palette[]>(LS.palettes, []).filter((p) => p.id !== 'dropups' && p.id !== 'blood');
   const stored = load<Scene | null>(LS.scene, null);
   return {
-    scene: stored ? sanitizeScene(stored) : makeScene(),
+    scene: startScene(stored),
     past: [],
     future: [],
     tab: 'texture',
@@ -86,6 +93,9 @@ function initial(): AppState {
     presets: load<Preset[]>(LS.presets, []),
   };
 }
+
+const rnd = Math.random;
+const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5; // ~[-1,1], bell shaped
 
 function sessionSeen(): boolean {
   try { return sessionStorage.getItem('bglab.entered') === '1'; } catch { return false; }
@@ -190,8 +200,6 @@ export function setFormat(preset: string, w: number, h: number) {
 }
 
 // ---------- random / remix ----------
-const rnd = Math.random;
-const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5; // ~[-1,1], bell shaped
 
 function nudgeParams(defs: Param[], cur: Values, spread: number, flipChance: number): Values {
   const out: Values = {};
@@ -229,30 +237,32 @@ export function randomPalette(mode: Harmony = 'auto') {
   setState({ activePalette: null });
 }
 
-/** Everything random: texture, params, seed, palette, finish and a bit of grade. */
+/** Everything random: texture, params, seed, palette, finish and a bit of grade. Pure. */
+export function randomScene(s: Scene): Scene {
+  const t = TEXTURES[Math.floor(rnd() * TEXTURES.length)];
+  const params = nudgeParams(t.params, {}, 0.25, 0.3);
+  const palette = generatePalette('auto');
+  const finish: Values = { ...makeScene().finish };
+  const fxOn = { ...defaultFxOn() };
+  const r = (a: number, b: number) => Math.round(a + rnd() * (b - a));
+  finish.grain = r(10, 40); finish.grainSize = +(1 + rnd() * 1.4).toFixed(1); finish.vignette = r(0, 45);
+  const extras = ['dust', 'paper', 'toner', 'streaks', 'ca', 'bleed', 'scan', 'edge', 'leak', 'hairs', 'jpeg', 'multi', 'tone', 'glow', 'wave', 'slice', 'poster'];
+  const n = Math.floor(rnd() * 3);
+  for (let i = 0; i < n; i++) {
+    const k = extras[Math.floor(rnd() * extras.length)];
+    fxOn[k] = true;
+    const e = EFFECTS.find((x) => x.id === k)!;
+    const main = e.params[0];
+    if (main.type === 'range') finish[main.id] = k === 'jpeg' ? r(8, 25) : r(20, 55);
+    if (k === 'leak') { finish.leakX = r(0, 100); finish.leakY = r(0, 100); finish.leakColor = palette[2]; }
+    if (k === 'multi') { finish.multiMode = Math.floor(rnd() * 3); finish.multiScale = +(0.6 + rnd() * 1.6).toFixed(1); }
+  }
+  const grade = { ...s.grade, hue: 0, invert: false, contrast: +(0.95 + rnd() * 0.25).toFixed(2), brightness: 0, saturation: +(0.9 + rnd() * 0.25).toFixed(2), duotone: rnd() < 0.06, duoA: 0, duoB: 1 + Math.floor(rnd() * 3) };
+  return { ...s, textureId: t.id, params: { ...s.params, [t.id]: params }, seed: Math.floor(rnd() * 99999), palette, finish, fxOn, grade };
+}
+
 export function randomAll() {
-  update((s) => {
-    const t = TEXTURES[Math.floor(rnd() * TEXTURES.length)];
-    const params = nudgeParams(t.params, {}, 0.25, 0.3);
-    const palette = generatePalette('auto');
-    const finish: Values = { ...makeScene().finish };
-    const fxOn = { ...defaultFxOn() };
-    const r = (a: number, b: number) => Math.round(a + rnd() * (b - a));
-    finish.grain = r(10, 40); finish.grainSize = +(1 + rnd() * 1.4).toFixed(1); finish.vignette = r(0, 45);
-    const extras = ['dust', 'paper', 'toner', 'streaks', 'ca', 'bleed', 'scan', 'edge', 'leak', 'hairs', 'jpeg', 'multi', 'tone', 'glow', 'wave', 'slice', 'poster'];
-    const n = Math.floor(rnd() * 3);
-    for (let i = 0; i < n; i++) {
-      const k = extras[Math.floor(rnd() * extras.length)];
-      fxOn[k] = true;
-      const e = EFFECTS.find((x) => x.id === k)!;
-      const main = e.params[0];
-      if (main.type === 'range') finish[main.id] = k === 'jpeg' ? r(8, 25) : r(20, 55);
-      if (k === 'leak') { finish.leakX = r(0, 100); finish.leakY = r(0, 100); finish.leakColor = palette[2]; }
-      if (k === 'multi') { finish.multiMode = Math.floor(rnd() * 3); finish.multiScale = +(0.6 + rnd() * 1.6).toFixed(1); }
-    }
-    const grade = { ...s.grade, hue: 0, invert: false, contrast: +(0.95 + rnd() * 0.25).toFixed(2), brightness: 0, saturation: +(0.9 + rnd() * 0.25).toFixed(2), duotone: rnd() < 0.06, duoA: 0, duoB: 1 + Math.floor(rnd() * 3) };
-    return { ...s, textureId: t.id, params: { ...s.params, [t.id]: params }, seed: Math.floor(rnd() * 99999), palette, finish, fxOn, grade };
-  });
+  update((s) => randomScene(s));
   save('active', null);
   setState({ activePalette: null });
 }
