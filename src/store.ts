@@ -1,11 +1,13 @@
 import { useSyncExternalStore } from 'react';
-import { DEFAULT_PALETTES, makeScene } from './defaults';
+import { defaultFxOn, makeScene } from './defaults';
+import { BUILTIN_PALETTES } from './palettes';
+import { EFFECTS } from './finish';
 import { TEXTURES, TEXTURE_BY_ID } from './textures';
 import { generatePalette } from './paletteGen';
 import type { Harmony } from './paletteGen';
 import type { Palette, Param, Preset, Scene, Values } from './types';
 
-export type Tab = 'texture' | 'colors' | 'dirt' | 'anim' | 'export';
+export type Tab = 'texture' | 'colors' | 'effects' | 'anim' | 'export';
 export type Sheet = 'peek' | 'half' | 'full';
 
 export interface AppState {
@@ -15,6 +17,7 @@ export interface AppState {
   tab: Tab;
   sheet: Sheet;
   safe: boolean;
+  cat: string;
   palettes: Palette[];
   activePalette: string | null;
   presets: Preset[];
@@ -40,6 +43,14 @@ export function save(key: keyof typeof LS, value: unknown): boolean {
 }
 
 /** Make a stored scene safe to use even if textures/params changed since it was saved. */
+/** old scenes had no switches: an effect was "on" when its amount was above 0 */
+function legacyFxOn(fin?: Values): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  if (!fin) return out;
+  for (const e of EFFECTS) out[e.id] = e.zero.some((z) => Number(fin[z] ?? 0) !== 0);
+  return out;
+}
+
 export function sanitizeScene(s: Scene): Scene {
   const base = makeScene();
   const out: Scene = {
@@ -48,6 +59,7 @@ export function sanitizeScene(s: Scene): Scene {
     grade: { ...base.grade, ...s.grade },
     finish: { ...base.finish, ...s.finish },
     anim: { ...base.anim, ...s.anim },
+    fxOn: { ...defaultFxOn(), ...(s.fxOn ?? legacyFxOn(s.finish)) },
     format: { ...base.format, ...s.format },
     params: s.params ?? {},
     palette: Array.isArray(s.palette) && s.palette.length === 5 ? s.palette : base.palette,
@@ -57,7 +69,7 @@ export function sanitizeScene(s: Scene): Scene {
 }
 
 function initial(): AppState {
-  const palettes = load<Palette[]>(LS.palettes, DEFAULT_PALETTES);
+  const saved = load<Palette[]>(LS.palettes, []).filter((p) => p.id !== 'dropups' && p.id !== 'blood');
   const stored = load<Scene | null>(LS.scene, null);
   return {
     scene: stored ? sanitizeScene(stored) : makeScene(),
@@ -66,8 +78,9 @@ function initial(): AppState {
     tab: 'texture',
     sheet: 'half',
     safe: false,
-    palettes: palettes.length ? palettes : DEFAULT_PALETTES,
-    activePalette: load<string | null>(LS.active, 'dropups'),
+    cat: 'all',
+    palettes: saved,
+    activePalette: load<string | null>(LS.active, null),
     presets: load<Preset[]>(LS.presets, []),
   };
 }
@@ -137,6 +150,9 @@ export function resetParam(def: Param) {
 export function setFinish(id: string, value: number | boolean | string) {
   update((s) => ({ ...s, finish: { ...s.finish, [id]: value } }), `f:${id}`);
 }
+export function setFx(id: string, on: boolean) {
+  update((s) => ({ ...s, fxOn: { ...s.fxOn, [id]: on } }), `fx:${id}`);
+}
 export function setGrade<K extends keyof Scene['grade']>(k: K, v: Scene['grade'][K]) {
   update((s) => ({ ...s, grade: { ...s.grade, [k]: v } }), `g:${k}`);
 }
@@ -148,6 +164,12 @@ export function setPaletteColor(i: number, hex: string) {
 }
 export function selectTexture(id: string) {
   update((s) => ({ ...s, textureId: id }));
+}
+export function stepTexture(dir: number, ids: string[]) {
+  if (!ids.length) return;
+  const i = ids.indexOf(state.scene.textureId);
+  const next = ids[i < 0 ? 0 : (i + dir + ids.length) % ids.length];
+  update((s) => ({ ...s, textureId: next }));
 }
 export function setSeed(seed: number) {
   update((s) => ({ ...s, seed: Math.max(0, Math.floor(seed)) }), 'seed');
@@ -194,6 +216,7 @@ export function remix() {
 
 export function randomPalette(mode: Harmony = 'auto') {
   update((s) => ({ ...s, palette: generatePalette(mode) }));
+  setState({ activePalette: null });
 }
 
 /** Everything random: texture, params, seed, palette, finish and a bit of grade. */
@@ -203,18 +226,22 @@ export function randomAll() {
     const params = nudgeParams(t.params, {}, 0.25, 0.3);
     const palette = generatePalette('auto');
     const finish: Values = { ...makeScene().finish };
+    const fxOn = { ...defaultFxOn() };
     const r = (a: number, b: number) => Math.round(a + rnd() * (b - a));
     finish.grain = r(10, 40); finish.grainSize = +(1 + rnd() * 1.4).toFixed(1); finish.vignette = r(0, 45);
-    if (rnd() < 0.5) { finish.multi = r(35, 85); finish.multiMode = Math.floor(rnd() * 3); finish.multiScale = +(0.6 + rnd() * 1.6).toFixed(1); }
-    const extras = ['dust', 'paper', 'toner', 'streaks', 'ca', 'bleed', 'scan', 'edge', 'leak', 'hairs', 'jpeg'];
+    const extras = ['dust', 'paper', 'toner', 'streaks', 'ca', 'bleed', 'scan', 'edge', 'leak', 'hairs', 'jpeg', 'multi', 'tone', 'glow', 'wave', 'slice', 'poster'];
     const n = Math.floor(rnd() * 3);
     for (let i = 0; i < n; i++) {
       const k = extras[Math.floor(rnd() * extras.length)];
-      finish[k] = k === 'jpeg' ? r(8, 25) : r(15, 50);
+      fxOn[k] = true;
+      const e = EFFECTS.find((x) => x.id === k)!;
+      const main = e.params[0];
+      if (main.type === 'range') finish[main.id] = k === 'jpeg' ? r(8, 25) : r(20, 55);
       if (k === 'leak') { finish.leakX = r(0, 100); finish.leakY = r(0, 100); finish.leakColor = palette[2]; }
+      if (k === 'multi') { finish.multiMode = Math.floor(rnd() * 3); finish.multiScale = +(0.6 + rnd() * 1.6).toFixed(1); }
     }
-    const grade = { ...s.grade, hue: 0, invert: false, contrast: +(0.95 + rnd() * 0.25).toFixed(2), brightness: 0, saturation: +(0.9 + rnd() * 0.25).toFixed(2), duotone: rnd() < 0.08, duoA: 0, duoB: 1 + Math.floor(rnd() * 3) };
-    return { ...s, textureId: t.id, params: { ...s.params, [t.id]: params }, seed: Math.floor(rnd() * 99999), palette, finish, grade };
+    const grade = { ...s.grade, hue: 0, invert: false, contrast: +(0.95 + rnd() * 0.25).toFixed(2), brightness: 0, saturation: +(0.9 + rnd() * 0.25).toFixed(2), duotone: rnd() < 0.06, duoA: 0, duoB: 1 + Math.floor(rnd() * 3) };
+    return { ...s, textureId: t.id, params: { ...s.params, [t.id]: params }, seed: Math.floor(rnd() * 99999), palette, finish, fxOn, grade };
   });
   save('active', null);
   setState({ activePalette: null });
@@ -229,7 +256,7 @@ function savePalettes(palettes: Palette[], active: string | null) {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function selectPalette(id: string) {
-  const p = state.palettes.find((x) => x.id === id);
+  const p = [...BUILTIN_PALETTES, ...state.palettes].find((x) => x.id === id);
   if (!p) return;
   update((s) => ({ ...s, palette: [...p.colors] }));
   save('active', id);

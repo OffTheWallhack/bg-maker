@@ -87,6 +87,32 @@ void main(){
   float gf = u_anim > 0.5 ? floor(fract(u_phase * u_cycles) * u_gframes) : 0.0;
   float seed = u_seed * 1.37;
 
+  // --- coordinate effects: mirror, wave, glitch slices, pixelate ---
+  vec2 suv = uv;
+  float sliceCa = 0.0;
+  if ((u_f_mirror * 0.01) > 0.001){
+    float ax = u_f_mirrorPos * 0.01;
+    vec2 m = suv;
+    if (u_f_mirrorMode < 0.5 || u_f_mirrorMode > 1.5) m.x = ax - abs(ax - suv.x);
+    if (u_f_mirrorMode > 0.5) m.y = ax - abs(ax - suv.y);
+    suv = mix(suv, m, clamp(u_f_mirror * 0.02, 0.0, 1.0));
+  }
+  if ((u_f_wave * 0.01) > 0.001){
+    float amp = u_f_wave * 0.01 * 0.035;
+    if (u_f_waveDir < 0.5) suv.x += amp * sin(suv.y * u_f_waveFreq + TT);
+    else suv.y += amp * sin(suv.x * u_f_waveFreq + TT);
+  }
+  if ((u_f_slice * 0.01) > 0.001){
+    float rowS = floor(suv.y * u_f_sliceCount + (vnoise(vec2(suv.y * u_f_sliceCount * 0.5, seed)) - 0.5) * 1.6);
+    float onS = step(hash(vec2(rowS, gf + 3.0 + seed)), 0.45);
+    suv.x += (hash(vec2(rowS, gf + seed)) - 0.5) * 0.3 * (u_f_slice * 0.01) * onS;
+    sliceCa = onS * u_f_sliceSplit * 0.01 * 0.03 * (u_f_slice * 0.01);
+  }
+  if ((u_f_pixel * 0.01) > 0.001){
+    vec2 bpx = vec2(mix(2.0, 70.0, u_f_pixel * 0.01) / K);
+    suv = (floor(suv * u_res / bpx) + 0.5) * bpx / u_res;
+  }
+
   // --- calm zone (soften) ---
   float cy = u_f_calmPos < 0.5 ? 0.86 : (u_f_calmPos < 1.5 ? 0.5 : 0.14);
   float cw = u_f_calmSize * 0.01 * 0.5;
@@ -94,10 +120,10 @@ void main(){
 
   // --- sampling with misregistration / CA / blur ---
   vec2 mis = vec2(u_f_misX, u_f_misY) * RPX;
-  vec2 ca = (uv - 0.5) * (u_f_ca * 0.01) * 0.03 * vec2(1.0, u_res.x / u_res.y);
+  vec2 ca = (uv - 0.5) * (u_f_ca * 0.01) * 0.03 * vec2(1.0, u_res.x / u_res.y) + vec2(sliceCa, 0.0);
   float blurR = (u_f_blur * 0.01) * 16.0 + (u_f_bleed * 0.01) * 3.0 + calmM * 18.0;
   float jit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
-  vec2 uvs = uv;
+  vec2 uvs = suv;
   float jp = (u_f_jpeg * 0.01);
   if (jp > 0.001){
     vec2 bl = floor(rp / mix(2.0, 22.0, jp));
@@ -123,15 +149,15 @@ void main(){
   // --- ink bleed: rounded, wobbly edges ---
   if ((u_f_bleed * 0.01) > 0.001){
     float n = vnoise(rp / 7.0 + seed) - 0.5;
-    vec3 b = blurAt(uv + vec2(n) * RPX * 5.0 * (u_f_bleed * 0.01), 2.0 + (u_f_bleed * 0.01) * 5.0, jit);
+    vec3 b = blurAt(suv + vec2(n) * RPX * 5.0 * (u_f_bleed * 0.01), 2.0 + (u_f_bleed * 0.01) * 5.0, jit);
     vec3 sharp = clamp((b - 0.5) * (1.0 + (u_f_bleed * 0.01) * 1.6) + 0.5, 0.0, 1.0);
     c = mix(c, sharp, (u_f_bleed * 0.01) * 0.85);
   }
 
   // --- glow ---
   if ((u_f_glow * 0.01) > 0.001){
-    vec3 g = blurAt(uv, 14.0 + 40.0 * (u_f_glow * 0.01), jit);
-    vec3 g2 = blurAt(uv, 5.0, jit);
+    vec3 g = blurAt(suv, 14.0 + 40.0 * (u_f_glow * 0.01), jit);
+    vec3 g2 = blurAt(suv, 5.0, jit);
     vec3 bright = max(g - 0.35, 0.0) + max(g2 - 0.5, 0.0) * 0.5;
     c = 1.0 - (1.0 - c) * (1.0 - bright * (u_f_glow * 0.01) * 1.4);
   }
@@ -147,6 +173,13 @@ void main(){
   c = mix(vec3(lm), c, u_saturation);
   c = mix(c, 1.0 - c, u_invert);
   c = clamp(c, 0.0, 1.0);
+
+  if ((u_f_poster * 0.01) > 0.001){ float lv = mix(28.0, 3.0, u_f_poster * 0.01); c = floor(c * lv + 0.5) / lv; }
+  if ((u_f_tone * 0.01) > 0.001){
+    float tl = luma(c); float ta = u_f_tone * 0.01;
+    c = mix(c, mix(c, u_f_toneShadow, 0.6), smoothstep(0.6, 0.0, tl) * ta);
+    c = mix(c, mix(c, u_f_toneHigh, 0.6), smoothstep(0.4, 1.0, tl) * ta);
+  }
 
   // --- more colours: a slow colour field spreads the palette across the image ---
   if ((u_f_multi * 0.01) > 0.001){

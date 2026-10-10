@@ -1,5 +1,5 @@
 import { hexToRgb, lumaOf, mulberry32 } from '../color';
-import { FINISH_PARAMS } from '../finish';
+import { EFFECTS, FINISH_PARAMS } from '../finish';
 import { TEXTURE_BY_ID } from '../textures';
 import type { Param, Scene, TextureDef, Values } from '../types';
 import { FINISH_FRAGMENT } from './finishShader';
@@ -142,6 +142,7 @@ export class Renderer {
     this.uni1(p, 'u_cycles', Math.max(1, Math.round(a.speed)));
     this.uni1(p, 'u_anim', a.on ? 1 : 0);
     const lm = l('u_motion'); if (lm) gl.uniform1i(lm, a.motion);
+    this.uni1(p, 'u_mamt', a.amount ?? 1);
     const [bg, i1, i2, hi, dirt] = scene.palette;
     this.uni3(p, 'u_bg', hexToRgb(bg)); this.uni3(p, 'u_ink1', hexToRgb(i1)); this.uni3(p, 'u_ink2', hexToRgb(i2));
     this.uni3(p, 'u_hi', hexToRgb(hi)); this.uni3(p, 'u_dirt', hexToRgb(dirt));
@@ -184,7 +185,9 @@ export class Renderer {
     this.uni3(fp, 'u_duoB', hexToRgb(scene.palette[g.duoB] ?? scene.palette[1]));
     const frames = Math.max(2, Math.round((12 * scene.anim.loop) / Math.max(1, Math.round(scene.anim.speed))));
     this.uni1(fp, 'u_gframes', frames);
-    this.setParams(fp, FINISH_PARAMS, scene.finish, 'f_');
+    const fv: Values = { ...scene.finish };
+    for (const e of EFFECTS) if (!scene.fxOn[e.id]) for (const z of e.zero) fv[z] = 0;
+    this.setParams(fp, FINISH_PARAMS, fv, 'f_');
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 

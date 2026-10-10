@@ -1,6 +1,6 @@
 import type { Param } from '../types';
 
-export const MOTIONS = ['drift', 'pulse', 'flicker', 'scroll', 'rotate'];
+export const MOTIONS = ['float', 'wave', 'breathe', 'scroll', 'swirl', 'flicker', 'glitch'];
 
 /** Declares a uniform for each param. Names: u_<prefix><id>. All numeric types are float. */
 export function paramDecls(params: Param[], prefix = ''): string {
@@ -27,7 +27,8 @@ uniform float u_seed;
 uniform float u_phase;   // 0..1 loop phase (0 when animation is off)
 uniform float u_cycles;  // integer motion cycles per loop
 uniform float u_anim;    // 0/1
-uniform int   u_motion;  // 0 drift 1 pulse 2 flicker 3 scroll 4 rotate
+uniform int   u_motion;  // 0 float 1 wave 2 breathe 3 scroll 4 swirl 5 flicker 6 glitch
+uniform float u_mamt;    // motion strength
 uniform vec3  u_bg, u_ink1, u_ink2, u_hi, u_dirt;
 uniform vec3  u_r0, u_r1, u_r2, u_r3; // bg/ink1/ink2/hi sorted dark -> light
 
@@ -184,6 +185,7 @@ void main(){
   vec2 p = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y;
   vec3 c;
   float on = u_anim;
+  float amt = u_mamt;
   if (on > 0.5 && u_motion == 3){
     float ph = fract(u_phase * u_cycles);
     vec3 a = tex(p + vec2(0.0, ph * 0.5), uv);
@@ -191,16 +193,29 @@ void main(){
     c = mix(a, b, smoothstep(0.0, 1.0, ph));
   } else {
     if (on > 0.5){
-      if (u_motion == 0) p += 0.06 * vec2(cos(TT) - 1.0, sin(TT));
-      else if (u_motion == 1) p *= 1.0 - 0.07 * sin(TT);
-      else if (u_motion == 4) p = rot(TT) * p;
+      if (u_motion == 0){
+        // every region drifts on its own little loop
+        vec2 w = vec2(vnoise(vec3(p * 1.7 + u_so * 0.05, 1.4 * cos(TT))), vnoise(vec3(p * 1.7 + 7.3 + u_so * 0.05, 1.4 * sin(TT)))) - 0.5;
+        p += w * 0.24 * amt;
+      } else if (u_motion == 1){
+        p += amt * 0.022 * vec2(sin(p.y * 8.0 + TT + 2.0 * vnoise(p * 2.0 + u_so * 0.05)), sin(p.x * 6.0 - TT));
+      } else if (u_motion == 2){
+        p *= 1.0 + 0.08 * amt * sin(TT + 5.0 * vnoise(p * 1.3 + u_so * 0.05));
+      } else if (u_motion == 4){
+        p = rot(amt * 0.45 * sin(TT + length(p) * 4.0)) * p;
+      } else if (u_motion == 6){
+        float fr = floor(u_phase * u_cycles * 10.0);
+        float row = floor(p.y * 34.0);
+        float h = hash(vec2(row, fr));
+        p.x += (hash(vec2(row, fr + 5.0)) - 0.5) * 0.3 * amt * step(0.8, h);
+      }
     }
     c = tex(p, uv);
-    if (on > 0.5 && u_motion == 2){
+    if (on > 0.5 && u_motion == 5){
       float n = 12.0 * u_cycles;
       float k = floor(u_phase * n);
       float f = hash(vec2(k, 3.0));
-      c *= 1.0 - 0.22 * f * step(0.45, hash(vec2(k, 9.0)));
+      c *= 1.0 - 0.28 * amt * f * step(0.45, hash(vec2(k, 9.0)));
     }
   }
   outColor = vec4(clamp(c, 0.0, 1.0), 1.0);

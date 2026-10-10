@@ -1,16 +1,16 @@
 import type { CategoryId, Param, TextureDef } from '../types';
 
 export const CATEGORIES: { id: CategoryId; name: string }[] = [
-  { id: 'folk', name: 'Ľudové / retro' },
-  { id: 'tribal', name: 'Neotribal / ostré tvary' },
   { id: 'gradient', name: 'Gradienty / mesh' },
+  { id: 'soft', name: 'Lesk / jemné svetlo' },
   { id: 'print', name: 'Tlač' },
+  { id: 'tribal', name: 'Neotribal / ostré tvary' },
+  { id: 'folk', name: 'Ľudové / retro' },
+  { id: 'nature', name: 'Voda / maskáč' },
   { id: 'material', name: 'Materiál' },
   { id: 'light', name: 'Svetlo / klub' },
   { id: 'geometry', name: 'Zvuk / geometria' },
   { id: 'glitch', name: 'Glitch / digitál' },
-  { id: 'nature', name: 'Voda / maskáč' },
-  { id: 'soft', name: 'Lesk / jemné svetlo' },
 ];
 
 /** slider */

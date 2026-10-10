@@ -28,7 +28,7 @@ export interface GlobalGrade {
   invert: boolean; duotone: boolean; duoA: number; duoB: number;
 }
 
-export interface Anim { on: boolean; speed: number; loop: number; motion: number }
+export interface Anim { on: boolean; speed: number; loop: number; motion: number; amount: number }
 
 /** Everything that defines the image. Serialisable; used for undo/redo and presets. */
 export interface Scene {
@@ -39,6 +39,8 @@ export interface Scene {
   palette: string[];
   grade: GlobalGrade;
   finish: Values;
+  /** which effects are switched on (id -> bool) */
+  fxOn: Record<string, boolean>;
   anim: Anim;
 }
 

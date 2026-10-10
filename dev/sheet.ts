@@ -20,7 +20,7 @@ const errors: Record<string, string> = {};
 const t0 = performance.now();
 list.forEach((t, i) => {
   const s = makeScene(t.id);
-  s.anim.on = anim;
+  s.anim.on = anim; s.anim.motion = Number(q.get('motion') ?? 0);
   if (q.get('multi')) { s.finish.multi = Number(q.get('multi')); s.finish.multiMode = Number(q.get('mode') ?? 1); }
   try { r.render(s, phase); ctx.drawImage(off, (i % COLS) * W, Math.floor(i / COLS) * H); }
   catch (e) { errors[t.id] = String(e); }
