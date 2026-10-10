@@ -148,3 +148,19 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   .sheet-peek .panel{height:84px}
   .arr{height:56px;width:26px}
 }
+
+/* ---------- intro ---------- */
+.intro{position:fixed;inset:0;z-index:100;background:#0a0714;display:flex;align-items:center;justify-content:center;transition:opacity .45s ease,transform .45s ease;overflow-y:auto}
+.intro.leave{opacity:0;transform:scale(1.04);pointer-events:none}
+.intro-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.1)}
+.intro-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,#0a071433 0%,#0a0714cc 85%)}
+.intro-card{position:relative;width:min(440px,100% - 40px);margin:auto;padding:28px 0;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.intro-logo{width:min(250px,56vw);border-radius:22px;box-shadow:0 20px 70px #000a}
+.intro-tag{margin:0;font-size:15px;color:#e8e2f4;max-width:340px}
+.intro-enter{padding:15px 26px;border-radius:99px;background:#f4eef9;color:#0a0714;font-weight:700;font-size:16px;letter-spacing:.01em;box-shadow:0 10px 40px #ff4fd855}
+.intro-enter span{display:inline-block;transition:transform .2s}.intro-enter:hover span{transform:translateX(4px)}
+.intro-news{padding:14px 16px;border:1px solid #ffffff26;border-radius:16px;background:#0a07148c;backdrop-filter:blur(8px);text-align:left}
+.intro-news small{color:#ff8fe8;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.intro-news p{margin:6px 0 0;font-size:13px;line-height:1.45;color:#d6cfe6}
+.intro-foot{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:13px;color:#a79fba}
+.intro-foot a{color:#f4eef9;text-decoration:none;border-bottom:1px solid #ffffff55}

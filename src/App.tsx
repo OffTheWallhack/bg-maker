@@ -4,6 +4,7 @@ import type { Tab } from './store';
 import { AnimTab } from './ui/AnimTab';
 import { ColorTab } from './ui/ColorTab';
 import { EffectsTab } from './ui/EffectsTab';
+import { Intro } from './ui/Intro';
 import { ExportTab } from './ui/ExportTab';
 import { FormatMenu } from './ui/FormatMenu';
 import { Preview } from './ui/Preview';
@@ -20,6 +21,7 @@ export function App() {
   const canUndo = useStore((s) => s.past.length > 0);
   const canRedo = useStore((s) => s.future.length > 0);
   const ids = useVisibleIds();
+  const intro = useStore((s) => s.intro);
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
@@ -38,9 +40,11 @@ export function App() {
 
   return (
     <div className={'app sheet-' + sheet}>
+      {intro && <Intro />}
       <header className="top">
         <FormatMenu />
         <div className="tools">
+          <button onClick={() => setState({ intro: true })} title="O projekte">ⓘ</button>
           <button onClick={randomAll} title="Všetko náhodne">🎲</button>
           <button onClick={undo} disabled={!canUndo} title="Späť">↶</button>
           <button onClick={redo} disabled={!canRedo} title="Znova">↷</button>

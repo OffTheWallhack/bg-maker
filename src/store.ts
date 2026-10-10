@@ -18,6 +18,7 @@ export interface AppState {
   sheet: Sheet;
   safe: boolean;
   cat: string;
+  intro: boolean;
   palettes: Palette[];
   activePalette: string | null;
   presets: Preset[];
@@ -79,10 +80,19 @@ function initial(): AppState {
     sheet: 'half',
     safe: false,
     cat: 'all',
+    intro: !sessionSeen(),
     palettes: saved,
     activePalette: load<string | null>(LS.active, null),
     presets: load<Preset[]>(LS.presets, []),
   };
+}
+
+function sessionSeen(): boolean {
+  try { return sessionStorage.getItem('bglab.entered') === '1'; } catch { return false; }
+}
+export function enterApp() {
+  try { sessionStorage.setItem('bglab.entered', '1'); } catch { /* ignore */ }
+  setState({ intro: false });
 }
 
 let state: AppState = initial();
