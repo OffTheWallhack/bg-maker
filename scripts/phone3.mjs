@@ -1,0 +1,10 @@
+import { chromium } from '/opt/node-tools/node_modules/playwright/index.mjs';
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+const p = await ctx.newPage();
+await p.goto('http://localhost:5173/'); await p.waitForTimeout(2500);
+if (await p.$('.intro-enter')) await p.click('.intro-enter');
+await p.waitForTimeout(1200);
+await p.click('.handle'); await p.waitForTimeout(500); await p.screenshot({ path: '/tmp/r-full.png' });
+await p.click('.handle'); await p.waitForTimeout(500); await p.screenshot({ path: '/tmp/r-peek.png' });
+await b.close();

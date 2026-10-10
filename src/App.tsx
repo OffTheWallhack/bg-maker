@@ -57,7 +57,7 @@ export function App() {
       </main>
       <TextureStrip />
       <aside className="panel">
-        <button className="handle" onClick={() => setState({ sheet: sheet === 'full' ? 'half' : sheet === 'half' ? 'peek' : 'half' })} aria-label="Panel"><i /></button>
+        <button className="handle" onClick={() => setState({ sheet: sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek' })} aria-label="Panel"><i /></button>
         <nav className="tabs">
           {TABS.map(([id, n]) => <button key={id} className={tab === id ? 'on' : ''} onClick={() => pickTab(id)}>{n}</button>)}
         </nav>
