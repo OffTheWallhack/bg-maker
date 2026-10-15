@@ -43,17 +43,16 @@ export function Intro() {
       <canvas ref={cv} className="intro-bg" />
       <div className="intro-shade" />
       <div className="intro-card">
-        <img src="./logo.png" alt="BG Maker" className="intro-logo" />
+        <img src="./logo.png" alt={SITE.name} className="intro-logo" />
+        <h1 className="intro-name">{SITE.name}</h1>
         <p className="intro-tag">{SITE.tagline}</p>
         <button className="intro-enter" onClick={enter}>{SITE.enter} <span>→</span></button>
-        <div className="intro-news">
-          <small>{SITE.news.title}</small>
-          <p>{SITE.news.text}</p>
-        </div>
-        <div className="intro-foot">
-          <span>od {SITE.author}</span>
-          {links.map((l) => <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer">{l.label} ↗</a>)}
-        </div>
+        {(links.length > 0 || SITE.author) && (
+          <div className="intro-foot">
+            <span>{SITE.author}</span>
+            {links.map((l) => <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer">{l.label} ↗</a>)}
+          </div>
+        )}
       </div>
     </div>
   );

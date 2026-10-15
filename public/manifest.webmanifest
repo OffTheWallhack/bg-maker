@@ -1,7 +1,7 @@
 {
-  "name": "BG Lab",
-  "short_name": "BG Lab",
-  "description": "Generátor pozadí pre story, posty a videá. Beží priamo vo vašom zariadení.",
+  "name": "bg maker",
+  "short_name": "bg maker",
+  "description": "free background / texture generator",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

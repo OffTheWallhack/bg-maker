@@ -1,4 +1,6 @@
-# BG Lab
+# bg maker
+
+free background / texture generator
 
 Generátor textúrovaných pozadí pre Instagram a ďalšie siete. React + TypeScript + Vite, WebGL2 (jeden fragment shader na textúru). UI po slovensky.
 

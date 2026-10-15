@@ -10,7 +10,7 @@ export function EffectsTab() {
   return (
     <div className="stack">
       <div className="row between">
-        <span className="hint">{active} zapnutých</span>
+        <span className="hint">{active === 0 ? 'Nič nie je zapnuté' : `Zapnuté: ${active}`}</span>
         <div className="row">
           <button className="btn small" onClick={() => update((s) => ({ ...s, fxOn: Object.fromEntries(EFFECTS.map((e) => [e.id, false])) }))}>Vypnúť všetko</button>
           <button className="btn small" onClick={() => update((s) => ({ ...s, fxOn: defaultFxOn(), finish: defaultFinish() }))}>Predvolené</button>
