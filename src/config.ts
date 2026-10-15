@@ -3,9 +3,9 @@ export const SITE = {
   name: 'bg maker',
   tagline: 'free background / texture generator',
   enter: 'enter',
-  author: 'ZRD 2026',
+  author: '',
   links: [
-    { label: 'ZRD 2026 – web', url: '' },
+    { label: 'Web', url: '' },
     { label: 'Instagram', url: '' },
   ],
 };
