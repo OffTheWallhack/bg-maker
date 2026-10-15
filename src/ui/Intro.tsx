@@ -3,20 +3,34 @@ import { SITE } from '../config';
 import { makeScene } from '../defaults';
 import { Renderer } from '../gl/renderer';
 import { enterApp } from '../store';
+import type { Values } from '../types';
+
+/** Intro backgrounds – one is picked at random on every open. */
+export const INTRO_LOOKS: { id: string; bg: string; texture: string; params: Values; palette: string[] }[] = [
+  { id: 'heatwave', bg: '#1a0500', texture: 'flow-gradient', params: { bands: 1.3, w1: 1.0, flow: 1.2 }, palette: ['#1A0500', '#FFE7B8', '#FF3D00', '#FF9A1F', '#B0122C'] },
+  { id: 'frost', bg: '#06111f', texture: 'grain-orb', params: { x: 0.05, y: 0.12, size: 0.85, fall: 1.1, dither: 0.6, second: 0.9 }, palette: ['#030B18', '#E4F8FF', '#2FA8FF', '#9FE3FF', '#15385C'] },
+  { id: 'toxic', bg: '#020302', texture: 'flow-gradient', params: { bands: 1.1, w1: 1.1, flow: 1.2, soft: 1.6 }, palette: ['#020302', '#F2FFD6', '#B6FF00', '#4CFF2F', '#0E1607'] },
+];
 
 export function Intro() {
   const cv = useRef<HTMLCanvasElement>(null);
   const [leaving, setLeaving] = useState(false);
+  const [look] = useState(() => {
+    const forced = new URLSearchParams(location.search).get('intro');
+    return INTRO_LOOKS.find((l) => l.id === forced) ?? INTRO_LOOKS[Math.floor(Math.random() * INTRO_LOOKS.length)];
+  });
 
   useEffect(() => {
     let raf = 0, r: Renderer | null = null;
     try {
       r = new Renderer(cv.current!);
       r.setSize(360, 640);
-      const s = makeScene('mesh-gradient', ['#0A0714', '#EDE7FF', '#7C3AED', '#FF4FD8', '#6C6A8A']);
-      s.anim = { on: true, speed: 1, loop: 14, motion: 0, amount: 1.3 };
-      s.params['mesh-gradient'] = { drift: 1, warp: 0.9 };
-      s.finish.grain = 30;
+      const s = makeScene(look.texture, look.palette);
+      s.anim = { on: true, speed: 1, loop: 14, motion: 0, amount: 1.2 };
+      s.params[look.texture] = look.params;
+      s.finish.grain = 28;
+      s.fxOn = { ...s.fxOn, glow: true };
+      s.finish.glow = 30;
       const t0 = performance.now();
       let last = 0;
       const loop = (now: number) => {
@@ -39,7 +53,7 @@ export function Intro() {
 
   const links = SITE.links.filter((l) => l.url);
   return (
-    <div className={'intro' + (leaving ? ' leave' : '')}>
+    <div className={'intro intro-' + look.id + (leaving ? ' leave' : '')} style={{ background: look.bg }}>
       <canvas ref={cv} className="intro-bg" />
       <div className="intro-shade" />
       <div className="intro-card">
